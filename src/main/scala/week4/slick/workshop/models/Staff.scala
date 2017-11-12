@@ -4,20 +4,18 @@ import scala.concurrent.Future
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
 
-// id as Option - autoincrement
-case class Staff(id: Option[Long], name: String, rate: Double, age: Int)
+case class Staff(name: String, rate: Double, age: Int, id: Option[Long] = None)
 
 final class StaffTable(tag: Tag) extends Table[Staff](tag, "staff") {
-  // no O.AutoInc
   //  val id = column[Option[Long]]("id", O.PrimaryKey)
-  val id = column[Long]("id", O.PrimaryKey)
   val name = column[String]("name")
   val rate = column[Double]("rate")
   val age = column[Int]("age")
+  val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
   //  def * = (id, title).mapTo[Country]
 //  def * = (id, name, rate, age) <> (Staff.apply _ tupled, Staff.unapply)
-  def * = (id.?, name, rate, age) <> (Staff.apply _ tupled, Staff.unapply)
+  def * = (name, rate, age, id.?) <> (Staff.apply _ tupled, Staff.unapply)
 }
 
 object StaffTable {

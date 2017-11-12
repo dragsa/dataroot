@@ -4,34 +4,35 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
+import scala.concurrent.ExecutionContext.Implicits.global
 
-// id as Option - autoincrement
-case class Film(id: Option[Long],
-                title: String,
+case class Film(title: String,
                 duration: Duration,
-                // n-to-n should ne implemented via junction tables
+// n-to-n relations should be implemented via junction tables
 //                genre: Genre,
 //                cast: Staff,
 //                country: Country,
-                // because only one director
+// because only one director Film - Director(Staff) is 1 - n
                 directorId: Long,
-                rating: Double)
+                rating: Double,
+                id: Option[Long] = None)
 
 final class FilmTable(tag: Tag) extends Table[Film](tag, "film") {
 
 //  def id = column[Option[Long]]("id", O.PrimaryKey)
-  def id = column[Long]("id", O.PrimaryKey)
   def title = column[String]("title")
   def duration = column[Duration]("duration")
   def directorId = column[Long]("director_id")
   def rating = column[Double]("rating")
+  def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-  val directorFk = foreignKey("director_id_fk", directorId, TableQuery[StaffTable]) (_.id)
+  val directorFk =
+    foreignKey("director_id_fk", directorId, TableQuery[StaffTable])(_.id)
 
-//  def * = (sender, content, id).mapTo[Message]
+//  def * = (id.?, title, duration, directorId, rating).mapTo[Film]
   def * =
 //    (id, title, duration, directorId, rating) <> (Film.apply _ tupled, Film.unapply)
-    (id.?, title, duration, directorId, rating) <> (Film.apply _ tupled, Film.unapply)
+    (title, duration, directorId, rating, id.?) <> (Film.apply _ tupled, Film.unapply)
 
 }
 
@@ -44,12 +45,13 @@ case class FilmToGenre(id: Option[Long], filmId: Long, genreId: Long)
 final class FilmToGenreTable(tag: Tag)
     extends Table[FilmToGenre](tag, "film_to_genre") {
 
-  val id = column[Long]("id", O.PrimaryKey)
+  val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   val filmId = column[Long]("film_id")
   val genreId = column[Long]("genre_id")
 
-  val filmIdFk = foreignKey("film_id_fk", filmId, TableQuery[FilmTable]) (_.id)
-  val genreIdFk = foreignKey("genre_id_fk", genreId, TableQuery[GenreTable]) (_.id)
+  val filmIdFk = foreignKey("film_id_fk", filmId, TableQuery[FilmTable])(_.id)
+  val genreIdFk =
+    foreignKey("genre_id_fk", genreId, TableQuery[GenreTable])(_.id)
 
   def * =
     (id.?, filmId, genreId) <> (FilmToGenre.apply _ tupled, FilmToGenre.unapply)
@@ -59,40 +61,42 @@ object FilmToGenreTable {
   val table = TableQuery[FilmToGenreTable]
 }
 
-case class FilmToStaff(id: Option[Long], filmId: Long, staffId: Long)
+case class FilmToStaff(filmId: Long, staffId: Long, id: Option[Long])
 
 final class FilmToStaffTable(tag: Tag)
     extends Table[FilmToStaff](tag, "film_to_cast") {
 
-  val id = column[Long]("id", O.PrimaryKey)
+  val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   val filmId = column[Long]("film_id")
   val staffId = column[Long]("staff_id")
 
-  val filmIdFk = foreignKey("film_id_fk", filmId, TableQuery[FilmTable]) (_.id)
-  val staffIdFk = foreignKey("staff_id_fk", staffId, TableQuery[StaffTable]) (_.id)
+  val filmIdFk = foreignKey("film_id_fk", filmId, TableQuery[FilmTable])(_.id)
+  val staffIdFk =
+    foreignKey("staff_id_fk", staffId, TableQuery[StaffTable])(_.id)
 
   def * =
-    (id.?, filmId, staffId) <> (FilmToStaff.apply _ tupled, FilmToStaff.unapply)
+    (filmId, staffId, id.?) <> (FilmToStaff.apply _ tupled, FilmToStaff.unapply)
 }
 
 object FilmToStaffTable {
   val table = TableQuery[FilmToStaffTable]
 }
 
-case class FilmToCountry(id: Option[Long], filmId: Long, countryId: Long)
+case class FilmToCountry(filmId: Long, countryId: Long, id: Option[Long])
 
 final class FilmToCountryTable(tag: Tag)
     extends Table[FilmToCountry](tag, "film_to_country") {
 
-  val id = column[Long]("id", O.PrimaryKey)
   val filmId = column[Long]("film_id")
   val countryId = column[Long]("country_id")
+  val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-  val filmIdFk = foreignKey("film_id_fk", filmId, TableQuery[FilmTable]) (_.id)
-  val countryIdFk = foreignKey("staff_id_fk", countryId, TableQuery[CountryTable]) (_.id)
+  val filmIdFk = foreignKey("film_id_fk", filmId, TableQuery[FilmTable])(_.id)
+  val countryIdFk =
+    foreignKey("country_id_fk", countryId, TableQuery[CountryTable])(_.id)
 
   def * =
-    (id.?, filmId, countryId) <> (FilmToCountry.apply _ tupled, FilmToCountry.unapply)
+    (filmId, countryId, id.?) <> (FilmToCountry.apply _ tupled, FilmToCountry.unapply)
 }
 
 object FilmToCountryTable {
@@ -102,7 +106,20 @@ object FilmToCountryTable {
 class FilmRepository(db: Database) {
   val filmTableQuery = FilmTable.table
 
-  def create(film: Film): Future[Film] = {
-    db.run(filmTableQuery returning filmTableQuery += film)
+  def create(film: Film,
+             genresIds: List[Long],
+             actorIds: List[Long],
+             countryIds: List[Long]): Future[Film] = {
+    val query = (filmTableQuery returning filmTableQuery += film).flatMap {
+      insertedFilm =>
+        (FilmToGenreTable.table ++= genresIds.map(genreId =>
+          FilmToGenre(None, insertedFilm.id.get, genreId)))
+          .andThen(FilmToCountryTable.table ++= countryIds.map(countryId =>
+            FilmToCountry(insertedFilm.id.get, countryId, None)))
+          .andThen(FilmToStaffTable.table ++= actorIds.map(actorId =>
+            FilmToStaff(insertedFilm.id.get, actorId, None)))
+          .andThen(DBIO.successful(insertedFilm))
+    }
+    db.run(query)
   }
 }

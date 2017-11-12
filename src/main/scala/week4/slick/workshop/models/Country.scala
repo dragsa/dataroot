@@ -4,18 +4,16 @@ import scala.concurrent.Future
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
 
-// id as Option - autoincrement
-case class Country(id: Option[Long], title: String)
+case class Country(title: String, id: Option[Long] = None)
 
 class CountryTable(tag: Tag) extends Table[Country](tag, "countries") {
-  // no O.AutoInc
 //  val id = column[Option[Long]]("id", O.PrimaryKey)
-  val id = column[Long]("id", O.PrimaryKey)
+  val id = column[Long]("id", O.PrimaryKey, O.AutoInc)
   val title = column[String]("table")
 
 //  def * = (id, title).mapTo[Country]
 //  def * = (id, title) <> (Country.apply _ tupled, Country.unapply)
-  def * = (id.?, title) <> (Country.apply _ tupled, Country.unapply)
+  def * = (title, id.?) <> (Country.apply _ tupled, Country.unapply)
 }
 
 object CountryTable {
