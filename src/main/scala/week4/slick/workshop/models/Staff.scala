@@ -1,5 +1,6 @@
 package week4.slick.workshop.models
 
+import scala.concurrent.Future
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
 
@@ -17,4 +18,16 @@ final class StaffTable(tag: Tag) extends Table[Staff](tag, "staff") {
   //  def * = (id, title).mapTo[Country]
 //  def * = (id, name, rate, age) <> (Staff.apply _ tupled, Staff.unapply)
   def * = (id.?, name, rate, age) <> (Staff.apply _ tupled, Staff.unapply)
+}
+
+object StaffTable {
+  val table = TableQuery[StaffTable]
+}
+
+class StaffRepository(db: Database) {
+  val staffTableQuery = StaffTable.table
+
+  def create(staff: Staff): Future[Staff] = {
+    db.run(staffTableQuery returning staffTableQuery += staff)
+  }
 }

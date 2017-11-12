@@ -1,5 +1,6 @@
 package week4.slick.workshop.models
 
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
@@ -34,6 +35,10 @@ final class FilmTable(tag: Tag) extends Table[Film](tag, "film") {
 
 }
 
+object FilmTable {
+  val table = TableQuery[FilmTable]
+}
+
 case class FilmToGenre(id: Option[Long], filmId: Long, genreId: Long)
 
 final class FilmToGenreTable(tag: Tag)
@@ -48,6 +53,10 @@ final class FilmToGenreTable(tag: Tag)
 
   def * =
     (id.?, filmId, genreId) <> (FilmToGenre.apply _ tupled, FilmToGenre.unapply)
+}
+
+object FilmToGenreTable {
+  val table = TableQuery[FilmToGenreTable]
 }
 
 case class FilmToStaff(id: Option[Long], filmId: Long, staffId: Long)
@@ -66,6 +75,10 @@ final class FilmToStaffTable(tag: Tag)
     (id.?, filmId, staffId) <> (FilmToStaff.apply _ tupled, FilmToStaff.unapply)
 }
 
+object FilmToStaffTable {
+  val table = TableQuery[FilmToStaffTable]
+}
+
 case class FilmToCountry(id: Option[Long], filmId: Long, countryId: Long)
 
 final class FilmToCountryTable(tag: Tag)
@@ -80,4 +93,16 @@ final class FilmToCountryTable(tag: Tag)
 
   def * =
     (id.?, filmId, countryId) <> (FilmToCountry.apply _ tupled, FilmToCountry.unapply)
+}
+
+object FilmToCountryTable {
+  val table = TableQuery[FilmToCountryTable]
+}
+
+class FilmRepository(db: Database) {
+  val filmTableQuery = FilmTable.table
+
+  def create(film: Film): Future[Film] = {
+    db.run(filmTableQuery returning filmTableQuery += film)
+  }
 }
