@@ -55,6 +55,13 @@ object Main extends App {
     }
   }
 
-  init()
-  databaseFill()
+//  init()
+//  databaseFill()
+  val allFilmInfo = filmRepository.getAllFilmIndoById(1)
+  Await.result(allFilmInfo, Duration.Inf)
+  println(allFilmInfo)
+
+  val filmWithDirector = filmRepository.getFilmWithDirector(1)
+  Await.result(filmWithDirector, Duration.Inf)
+  println(filmWithDirector)
 }
