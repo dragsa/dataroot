@@ -38,3 +38,6 @@ lazy val model = Project("model", file("model")).settings(globalSettings: _*)
 lazy val application = Project("application", file("application"))
   .settings(globalSettings: _*)
   .dependsOn(repositories)
+//  .dependsOn(repositories, depProject)
+
+//lazy val depProject = RootProject(uri("https://github.com/dragsa/AlgorithmsPart_1_new.git#master"))
