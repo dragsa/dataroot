@@ -4,7 +4,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Random
 import slick.jdbc.PostgresProfile.api._
-import models._
+import implicits._
+import model._
 
 object Main extends App {
   val db = Database.forURL(

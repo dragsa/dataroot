@@ -1,10 +1,10 @@
-package week4.slick.workshop.models
+package week4.slick.workshop
 
 import scala.concurrent.Future
+import model.Staff
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
 
-case class Staff(name: String, rate: Double, age: Int, id: Option[Long] = None)
 
 final class StaffTable(tag: Tag) extends Table[Staff](tag, "staff") {
   //  val id = column[Option[Long]]("id", O.PrimaryKey)

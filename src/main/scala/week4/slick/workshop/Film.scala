@@ -1,21 +1,13 @@
-package week4.slick.workshop.models
+package week4.slick.workshop
 
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import slick.lifted.Tag
 import slick.jdbc.PostgresProfile.api._
 import scala.concurrent.ExecutionContext.Implicits.global
+import model._
+import implicits._
 
-case class Film(title: String,
-                duration: Duration,
-// n-to-n relations should be implemented via junction tables
-//                genre: Genre,
-//                cast: Staff,
-//                country: Country,
-// because only one director Film - Director(Staff) is 1 - n
-                directorId: Long,
-                rating: Double,
-                id: Option[Long] = None)
 
 final class FilmTable(tag: Tag) extends Table[Film](tag, "film") {
 
