@@ -123,7 +123,7 @@ class FilmRepository(db: Database) {
     db.run(query)
   }
 
-  def getAllFilmIndoById(filmId: Long): Future[(Film, Seq[Genre], Seq[Country], Seq[Staff])] = {
+  def getAllFilmInfoById(filmId: Long): Future[(Film, Seq[Genre], Seq[Country], Seq[Staff])] = {
     val query = for {
       // will return Seq anyway, call head here
       film <- FilmTable.table.filter(_.id === filmId).result.head

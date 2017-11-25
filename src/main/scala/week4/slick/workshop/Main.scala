@@ -57,7 +57,7 @@ object Main extends App {
 
 //  init()
 //  databaseFill()
-  val allFilmInfo = filmRepository.getAllFilmIndoById(1)
+  val allFilmInfo = filmRepository.getAllFilmInfoById(1)
   Await.result(allFilmInfo, Duration.Inf)
   println(allFilmInfo)
 
