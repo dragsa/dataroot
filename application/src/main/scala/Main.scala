@@ -1,11 +1,9 @@
-package week4.slick.workshop
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Random
-import slick.jdbc.PostgresProfile.api._
-import implicits._
+import daos._
 import model._
+import slick.jdbc.PostgresProfile.api._
 
 object Main extends App {
   val db = Database.forURL(
@@ -34,25 +32,26 @@ object Main extends App {
 
     val genres = List("Horror", "Sci-fi", "Drama", "Fantasy", "18+")
     for (i <- genres) {
-      Await.result(genreRepository.create(Genre(i, None)),
-        Duration.Inf)
+      Await.result(genreRepository.create(Genre(i, None)), Duration.Inf)
     }
 
     for (i <- 1 to 100) {
-      Await.result(staffRepository.create(
-                     Staff(s"Staff Name $i", i * 10000, i % 10 + 25)),
-                   Duration.Inf)
+      Await.result(
+        staffRepository.create(Staff(s"Staff Name $i", i * 10000, i % 10 + 25)),
+        Duration.Inf)
     }
 
     for (i <- 1 to 10) {
       Await.result(
         filmRepository.create(
           Film(s"Film Name $i", (i * 10000).seconds, i % 5 * 10 + 1, i % 5 + 5),
-          List(Random.nextInt(genres.length) + 1, Random.nextInt(genres.length) + 1),
+          List(Random.nextInt(genres.length) + 1,
+               Random.nextInt(genres.length) + 1),
           List(Random.nextInt(100).toLong + 1, Random.nextInt(100).toLong + 1),
           List(Random.nextInt(5).toLong + 1, Random.nextInt(5).toLong + 1)
         ),
-        Duration.Inf)
+        Duration.Inf
+      )
     }
   }
 

@@ -1,4 +1,4 @@
-package week4.slick.workshop
+package daos
 
 import scala.concurrent.Future
 import model.Staff

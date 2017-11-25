@@ -18,7 +18,7 @@ val globalSettings = Seq[SettingsDefinition](
 
 lazy val root = Project(id = "slick_workshop", base = file("."))
   .settings(globalSettings: _*)
-  .dependsOn(repositories)
+  .aggregate(application)
 
 lazy val repositories = Project("repos", file("repos"))
   .settings(globalSettings: _*)
@@ -34,3 +34,7 @@ lazy val repositories = Project("repos", file("repos"))
   .dependsOn(model)
 
 lazy val model = Project("model", file("model")).settings(globalSettings: _*)
+
+lazy val application = Project("application", file("application"))
+  .settings(globalSettings: _*)
+  .dependsOn(repositories)
